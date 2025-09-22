@@ -165,5 +165,4 @@ code ai_guide.md          # 또는 nano ai_guide.md
 git add ai_guide.md
 git commit -m "docs: overhaul ai_guide for AI-first workflow"
 git push origin HEAD
-업데이트가 반영되면, 내가 이 문서를 기준으로 파일/라인 단위 패치 제안을 바로 진행할 수 있어.
-다음으로 어떤 이슈(예: Gemini 검증 안정화, 대시보드 데이터 연결)부터 손볼지 말해줘—그 작업을 네 리포 기준으로 바로 해줄게.
+
