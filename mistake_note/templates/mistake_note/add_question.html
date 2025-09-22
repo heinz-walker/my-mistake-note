@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}문제 추가하기{% endblock %}
+
+{% block head_extra %}
+    {{ form.media }}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="card-title text-center mb-0">새 문제 추가하기</h1>
+                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
+                    CSV로 가져오기
+                </button>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="add-question-form"
+      data-validate-url="{% url 'mistake_note:validate_question_api' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_exam" class="form-label">시험</label>
+                        <div class="input-group">
+                            {{ form.exam }}
+                            <a href="{% url 'admin:mistake_note_exam_add' %}" class="btn btn-primary" target="_blank">추가</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_category" class="form-label">카테고리</label>
+                        <div class="input-group">
+                            {{ form.category }}
+                            <a href="{% url 'admin:mistake_note_category_add' %}" class="btn btn-primary" target="_blank">추가</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_type" class="form-label">문제 종류</label>
+                    {{ form.type }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_content" class="form-label">문제</label>
+                    {{ form.content }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_passage" class="form-label">지문 (선택)</label>
+                    {{ form.passage }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_image" class="form-label">이미지 (선택)</label>
+                    {{ form.image }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_tags" class="form-label">태그 선택</label>
+                    {{ form.tags }}
+                </div>
+                <div class="mb-3">
+                    {{ form.new_tags.label_tag }}
+                    {{ form.new_tags }}
+                    <div class="form-text">{{ form.new_tags.help_text }}</div>
+                </div>
+                <hr>
+
+                <div id="options-container">
+                    <h4>선택지</h4>
+                    <div id="options-fields">
+                        <div class="input-group mb-3">
+                            <input type="text" name="option_1" class="form-control" placeholder="선택지 1">
+                            <button class="btn btn-outline-secondary remove-option" type="button">제거</button>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" name="option_2" class="form-control" placeholder="선택지 2">
+                            <button class="btn btn-outline-secondary remove-option" type="button">제거</button>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" name="option_3" class="form-control" placeholder="선택지 3">
+                            <button class="btn btn-outline-secondary remove-option" type="button">제거</button>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" name="option_4" class="form-control" placeholder="선택지 4">
+                            <button class="btn btn-outline-secondary remove-option" type="button">제거</button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-option" class="btn btn-success">선택지 추가</button>
+                    <hr>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_correct_answer" class="form-label">정답</label>
+                    {{ form.correct_answer }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_explanation" class="form-label">해설</label>
+                    {{ form.explanation }}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg mt-3" name="add_single_question">문제 추가하기</button>
+                <button type="button" id="ai-validate-btn" class="btn btn-info btn-lg mt-3">AI 검증</button>
+            </form>
+
+            <div id="ai-feedback-box" class="alert alert-light mt-4" style="display: none;">
+                <h5 class="alert-heading">🤖 AI 검증 결과</h5>
+                <hr>
+                <div id="ai-feedback-content" style="white-space: pre-wrap;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">CSV 파일로 문제 가져오기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'mistake_note:add_question_page' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">CSV 파일 선택</label>
+                        <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                        <div class="form-text">
+                            CSV 파일의 첫 행은 모델 필드명과 일치해야 합니다.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="submit" class="btn btn-primary" name="import_csv">업로드 및 등록</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    {{ form.media.js }}
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}학습 대시보드{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">학습 대시보드</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">총 풀이 횟수</h5>
+                    <p class="card-text fs-2 fw-bold">{{ total_answers }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">총 정답 횟수</h5>
+                    <p class="card-text fs-2 fw-bold text-success">{{ correct_answers }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">전체 정답률</h5>
+                    <p class="card-text fs-2 fw-bold text-primary">{{ overall_accuracy|floatformat:1 }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card">
+                <div class="card-header">일별 정답률 추이</div>
+                <div class="card-body">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">취약 카테고리 TOP 5</div>
+                <div class="card-body">
+                    <canvas id="weakCategoriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">취약 태그 TOP 5</div>
+                <div class="card-body">
+                    <canvas id="weakTagsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ daily_accuracy_data|json_script:"daily-accuracy-data" }}
+{{ weak_categories_data|json_script:"weak-categories-data" }}
+{{ weak_tags_data|json_script:"weak-tags-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. 일별 정답률 라인 차트
+    const dailyData = JSON.parse(document.getElementById('daily-accuracy-data').textContent);
+    const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+    new Chart(accuracyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyData.labels,
+            datasets: [{
+                label: '정답률 (%)',
+                data: dailyData.data,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+
+    // 2. 취약 카테고리 바 차트
+    const categoryData = JSON.parse(document.getElementById('weak-categories-data').textContent);
+    const categoryCtx = document.getElementById('weakCategoriesChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+            labels: categoryData.labels,
+            datasets: [{
+                label: '오답 횟수',
+                data: categoryData.data,
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            }]
+        },
+        options: { indexAxis: 'y' } // 가로 막대 그래프
+    });
+    
+    // 3. 취약 태그 바 차트
+    const tagData = JSON.parse(document.getElementById('weak-tags-data').textContent);
+    const tagCtx = document.getElementById('weakTagsChart').getContext('2d');
+    new Chart(tagCtx, {
+        type: 'bar',
+        data: {
+            labels: tagData.labels,
+            datasets: [{
+                label: '오답 횟수',
+                data: tagData.data,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            }]
+        },
+        options: { indexAxis: 'y' } // 가로 막대 그래프
+    });
+});
+</script>
+{% endblock %}

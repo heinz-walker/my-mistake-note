@@ -1,0 +1,20 @@
+/* static/mistake_note/css/admin_custom.css */
+
+/*
+  Django 어드민은 화면이 넓어지면 flexbox를 사용해 폼 행(.form-row)의
+  너비를 고정합니다. 이 규칙은 그 동작을 덮어쓰고, 에디터를 감싸는
+  부모 div가 항상 가득 차도록 강제합니다.
+*/
+#content-main .form-row.field-content,
+#content-main .form-row.field-passage,
+#content-main .form-row.field-explanation {
+    width: 100%;
+    flex: 1 0 auto; /* flexbox의 너비 축소 방지 */
+}
+
+/*
+  만약을 대비해 Summernote 위젯 자체에도 너비 100%를 다시 한번 강제합니다.
+*/
+.django-summernote-widget {
+    width: 100% !important;
+}

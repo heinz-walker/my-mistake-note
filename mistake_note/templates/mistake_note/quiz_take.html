@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}문제 풀기{% endblock %}
+
+{% block content %}
+<div class="container my-5"
+     id="quiz-page-container"
+     data-question-id="{{ question.id }}"
+     data-question-type="{{ question.type }}"
+     data-is-last-question="{{ is_last_question|yesno:'true,false' }}"
+     data-record-url="{% url 'mistake_note:record_quiz_answer' %}"
+     data-summary-url="{% url 'mistake_note:quiz_summary' %}"
+     data-quiz-mode="true">
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="text-muted">문제 {{ current_index }} / {{ total_questions }}</p>
+            <div class="mb-3">
+                <span class="badge rounded-pill bg-secondary">{{ question.category.name }}</span>
+            {% for tag in question.tags.all %}
+                <span class="badge rounded-pill bg-info text-dark">{{ tag.name }}</span>
+            {% endfor %}
+            </div>
+
+            <h5 class="card-title mb-3">{{ question.content|safe }}</h5>
+
+            {% if question.image %}
+            <div class="text-center my-3">
+                <img src="{{ question.image.url }}" alt="문제 이미지" class="img-fluid rounded" style="max-width: 500px;">
+            </div>
+            {% endif %}
+
+            {% if question.passage %}
+            <div class="passage-box my-3 p-3 border rounded bg-light">
+                {{ question.passage|safe }}
+            </div>
+            {% endif %}
+
+            {% if question.type == 'MCQ' or question.type == 'MA' %}
+            <div id="options-container" class="mt-4 list-group">
+                {% for item in options_with_labels %}
+                <div class="option list-group-item list-group-item-action" data-value="{{ item.text }}">
+                    <b class="me-2">{{ item.label }}.</b>
+                    <span>{{ item.text }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if question.type == 'SA' %}
+            <div id="sa-container" class="mt-4">
+                <textarea id="sa-answer-input" class="form-control" rows="3" placeholder="답안을 입력하세요..."></textarea>
+            </div>
+            {% endif %}
+
+            <div id="correct-answer" data-answer="{{ question.correct_answer }}" style="display: none;"></div>
+
+            <p id="correct-answer-display" class="mt-4 fw-bold" style="display: none;"></p>
+
+            <div id="explanation-box" class="alert alert-info mt-4" style="display: none;">
+                <h5>해설</h5>
+                <div>{{ question.explanation|safe }}</div>
+            </div>
+
+            <div class="mt-4">
+                <button id="submit-btn" type="button" class="btn btn-primary">제출하기</button>
+                <a id="next-btn" href="? " class="btn btn-success" style="display: none;">
+                    다음 문제
+                </a>
+            </div>
+
+            <form style="display: none;">
+                {% csrf_token %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

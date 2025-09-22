@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">나만의 문제은행</h1>
+        <p class="col-md-8 fs-4">오답노트와 퀴즈 모드로 효율적인 학습을 시작해보세요.</p>
+    </div>
+</div>
+<div class="row align-items-md-stretch">
+    <div class="col-md-6">
+        <div class="h-100 p-5 bg-light border rounded-3 text-center">
+            <h2>문제 추가하기</h2>
+            <p>새로운 오답 문제를 기록하고 관리합니다.</p>
+           <a href="{% url 'mistake_note:add_question_page' %}" class="btn btn-primary btn-lg">문제 추가하기</a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="h-100 p-5 bg-light border rounded-3 text-center">
+            <h2>문제 풀기</h2>
+            <p>다양한 퀴즈 모드로 문제를 풀어보세요.</p>
+            <a href="{% url 'mistake_note:quiz_select' %}" class="btn btn-success btn-lg">문제 풀기</a>
+        </div>
+    </div>
+</div>
+   <hr class="my-5">
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>최근 추가된 문제</h3>
+            <div class="list-group">
+                {% for question in recent_questions %}
+                    <a href="{% url 'mistake_note:question_detail' pk=question.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">문제 #{{ question.id }} ({{ question.exam }} - {{ question.category }})</h5>
+                            <small>{{ question.created_at|date:"Y. m. d" }}</small>
+                        </div>
+                        <p class="mb-1">{{ question.content|safe|striptags|truncatechars:150 }}</p>
+
+<div class="mt-2">
+    <span class="badge bg-secondary">{{ question.category.name }}</span>
+    {% for tag in question.tags.all %}
+        <span class="badge bg-info text-dark">{{ tag.name }}</span>
+    {% endfor %}
+</div>
+                        <p class="mb-1">{{ question.content|safe|striptags|truncatechars:150 }}</p>
+                        <small class="text-muted">
+                            {% if question.type == 'MCQ' %}객관식
+                            {% elif question.type == 'SA' %}주관식
+                            {% else %}복수정답
+                            {% endif %}
+                        </small>
+                    </a>
+                {% empty %}
+                    <p class="text-muted">아직 추가된 문제가 없습니다.</p>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'mistake_note:question_list' %}" class="btn btn-outline-secondary">전체 문제 목록 보기</a>
+            </div>
+        </div>
+    </div>
+    </div>
+{% endblock %}

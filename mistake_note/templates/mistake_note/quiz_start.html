@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}문제 풀이 시작{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-center mb-4">문제 풀이 목록</h1>
+            {% for question in questions %}
+                <div class="mb-3">
+                    <h5 class="card-title">{{ forloop.counter }}. {{ question.content|safe|striptags|truncatechars:100 }}</h5>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'mistake_note:question_detail' pk=question.pk %}" class="btn btn-sm btn-outline-secondary">문제 풀기</a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-secondary text-center" role="alert">
+                    선택하신 조건에 맞는 문제가 없습니다.
+                </div>
+            {% endfor %}
+            <div class="text-center mt-4">
+                <a href="{% url 'mistake_note:quiz_select' %}" class="btn btn-secondary">퀴즈 모드 다시 선택하기</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

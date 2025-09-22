@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}퀴즈 모드 선택{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-center mb-4">퀴즈 모드 선택</h1>
+            <p class="text-center text-muted mb-4" id="total-questions-info">전체 문제 수: {{ total_questions }}개</p>
+            <form method="post" action="{% url 'mistake_note:quiz_select' %}" id="quiz-select-form">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_exam" class="form-label">시험 종류</label>
+                    {{ form.exam }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_mode" class="form-label">퀴즈 모드</label>
+                    {{ form.mode }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_count" class="form-label">
+                        문제 개수 <span id="available-count" class="text-muted small"></span>
+                    </label>
+                    {{ form.count }}
+                </div>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">퀴즈 시작</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

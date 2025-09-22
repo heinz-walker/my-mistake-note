@@ -1,0 +1,22 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {{ form.media }}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+    <div class.="submit-row">
+        <button type="button" id="ai-validate-btn" class="button">AI 검증</button>
+    </div>
+    <div id="ai-feedback-box" class="aligned" style="display: none; margin-top: 20px;">
+        <h2>🤖 AI 검증 결과</h2>
+        <div class="form-row">
+            <div id="ai-feedback-content" style="white-space: pre-wrap; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background-color: #f8f8f8;"></div>
+        </div>
+    </div>
+{% endblock %}

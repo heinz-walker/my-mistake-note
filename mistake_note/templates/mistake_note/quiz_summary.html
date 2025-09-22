@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}퀴즈 결과{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-center mb-3">퀴즈 결과</h1>
+            <h2 class="text-center">총점: {{ score }} / {{ total_questions }}</h2>
+            <p class="text-center fs-5">
+                {{ total_questions }}문제 중 {{ score }}개를 맞히셨습니다!
+            </p>
+
+            {% if incorrect_questions_data %}
+                <hr class="my-4">
+                <h3 class="mb-3">오답 노트</h3>
+                {% for data in incorrect_questions_data %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">문제 내용</h5>
+                            <div>{{ data.question.content|safe }}</div>
+
+                            {% if data.question.image %}
+                                <img src="{{ data.question.image.url }}" alt="문제 이미지" class="img-fluid rounded my-2" style="max-width: 400px;">
+                            {% endif %}
+
+                            <p class="mt-3 mb-1"><strong class="text-danger">당신의 답:</strong> {{ data.submitted_answer }}</p>
+                            <p class="text-success"><strong>정답:</strong> {{ data.question.correct_answer }}</p>
+
+<div class="mt-2">
+    <span class="badge bg-secondary">{{ data.question.category.name }}</span>
+    {% for tag in data.question.tags.all %}
+        <span class="badge bg-info text-dark">{{ tag.name }}</span>
+    {% endfor %}
+</div>
+                            {% if data.question.explanation %}
+                                <hr>
+                                <h6>해설</h6>
+                                <div>{{ data.question.explanation|safe }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-success mt-4" role="alert">
+                  모든 문제를 맞혔습니다! 완벽해요 👍
+                </div>
+            {% endif %}
+
+            <div class="text-center mt-4">
+                <a href="{% url 'mistake_note:quiz_select' %}" class="btn btn-secondary">새로운 퀴즈 시작하기</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
