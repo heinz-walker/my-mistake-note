@@ -1,1 +1,1 @@
-> 📘 작업 안내: **[AI_INDEX.md](./AI_INDEX.md)** / **[AI_GUIDE.md](./AI_GUIDE.md)**
+> 📘 작업 안내:  **[AI_GUIDE.md](./ai_guide.md)**
