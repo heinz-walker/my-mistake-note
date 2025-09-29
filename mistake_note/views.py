@@ -14,7 +14,7 @@ from django.db.models.expressions import ExpressionWrapper
 from fuzzywuzzy import fuzz
 from django.db import transaction
 
-from .models import Question, UserAnswer, Exam, Category
+from .models import Question, UserAnswer, Exam, Category, Tag
 from .forms import QuestionForm, AnswerForm, QuizSelectionForm
 
 
@@ -427,39 +427,60 @@ def get_question_count(request):
 
 @require_POST
 def validate_question_api(request):
+    """
+    기존 응답 포맷을 유지하면서 안정성만 보강:
+    - JSON 본문 검증
+    - 필수 필드 확인
+    - 타임아웃 적용
+    - 빈 응답/형식 불일치 방어
+    - 내부 예외 메시지 노출 최소화
+    응답 예:
+      { "status": "success", "feedback": "..." }
+      { "status": "error", "message": "..." }
+    """
     try:
-        # Gemini API 설정
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash') # 경량화된 최신 모델
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except Exception:
+            return JsonResponse({"status": "error", "message": "잘못된 요청 본문(JSON 아님)"}, status=400)
 
-        # JavaScript로부터 전송된 데이터 파싱
-        data = json.loads(request.body)
-        question_content = data.get('content', '')
-        question_options = data.get('options', '')
-        question_answer = data.get('answer', '')
+        question_content = (data.get("content") or "").strip()
+        question_options = (data.get("options") or "").strip()
+        question_answer  = (data.get("answer")  or "").strip()
 
-        # Gemini API에 보낼 프롬프트(명령어) 구성
-        prompt = f"""
-        당신은 문제 출제 전문가입니다. 아래 문제의 유효성을 검증하고 피드백을 주세요.
+        if not question_content or not question_answer:
+            return JsonResponse({"status": "error", "message": "content/answer는 필수입니다."}, status=400)
 
-        1.  **문제의 명확성**: 질문이 명확하고 오해의 소지가 없는지 확인해주세요.
-        2.  **정답의 정확성**: 제시된 정답이 문제에 대해 명백히 옳은지 확인해주세요.
-        3.  **선택지의 타당성**: 객관식의 경우, 다른 선택지들이 적절한 오답인지 확인해주세요.
+        api_key = getattr(settings, "GEMINI_API_KEY", "")
+        if not api_key:
+            return JsonResponse({"status": "error", "message": "서버에 GEMINI_API_KEY가 설정되지 않았습니다."}, status=500)
 
-        피드백은 '유효성'과 '개선 제안' 두 항목으로 나누어 간결하게 존댓말로 작성해주세요.
+        model_name = getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash")
+        timeout = int(getattr(settings, "GEMINI_TIMEOUT_SEC", 12))
 
-        ---
-        - **문제 내용**: {question_content}
-        - **선택지**: {question_options}
-        - **정답**: {question_answer}
-        ---
-        """
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(model_name)
 
-        # API 호출 및 응답 받기
-        response = model.generate_content(prompt)
-        ai_feedback = response.text
+        prompt = (
+            "당신은 시험문항 검토자입니다. 아래 문항의 '명확성/정답 유일성/선택지 타당성'을 간결하게 검토하고 "
+            "두 항목으로만 출력하세요: 1) 유효성, 2) 개선 제안.\n"
+            f"---\n- 문제 내용: {question_content}\n- 선택지: {question_options}\n- 정답: {question_answer}\n---"
+        )
 
-        return JsonResponse({'status': 'success', 'feedback': ai_feedback})
+        resp = model.generate_content(prompt, request_options={"timeout": timeout})
 
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        # SDK 버전별 응답 추출 (안전)
+        text = getattr(resp, "text", None)
+        if not text and getattr(resp, "candidates", None):
+            parts = getattr(resp.candidates[0], "content", {}).get("parts", [])
+            text = "".join(getattr(p, "text", "") for p in parts)
+
+        if not text or not str(text).strip():
+            return JsonResponse({"status": "error", "message": "AI 응답이 비어 있습니다."}, status=502)
+
+        return JsonResponse({"status": "success", "feedback": str(text).strip()})
+    except Exception:
+        # 내부 에러는 상세 노출하지 않음 (보안/안정성)
+        return JsonResponse({"status": "error", "message": "AI 검증 중 오류가 발생했습니다."}, status=502)
+
+#test
