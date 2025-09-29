@@ -1,78 +1,67 @@
-{% extends 'base.html' %}
-
-{% block title %}문제 풀기{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="container my-5"
-     id="quiz-page-container"
-     data-question-id="{{ question.id }}"
-     data-question-type="{{ question.type }}"
-     data-is-last-question="{{ is_last_question|yesno:'true,false' }}"
-     data-record-url="{% url 'mistake_note:record_quiz_answer' %}"
-     data-summary-url="{% url 'mistake_note:quiz_summary' %}"
-     data-quiz-mode="true">
+<div class="container">
+    <h1>{{ quiz.title }}</h1>
+    <p>{{ quiz.description }}</p>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <p class="text-muted">문제 {{ current_index }} / {{ total_questions }}</p>
-            <div class="mb-3">
-                <span class="badge rounded-pill bg-secondary">{{ question.category.name }}</span>
-            {% for tag in question.tags.all %}
-                <span class="badge rounded-pill bg-info text-dark">{{ tag.name }}</span>
-            {% endfor %}
+    <form id="quiz-form">
+        {% csrf_token %}
+        <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+
+        {% for question in questions %}
+        <div class="card my-4">
+            <div class="card-header">
+                <h5>{{ question.text }}</h5>
             </div>
-
-            <h5 class="card-title mb-3">{{ question.content|safe }}</h5>
-
-            {% if question.image %}
-            <div class="text-center my-3">
-                <img src="{{ question.image.url }}" alt="문제 이미지" class="img-fluid rounded" style="max-width: 500px;">
-            </div>
-            {% endif %}
-
-            {% if question.passage %}
-            <div class="passage-box my-3 p-3 border rounded bg-light">
-                {{ question.passage|safe }}
-            </div>
-            {% endif %}
-
-            {% if question.type == 'MCQ' or question.type == 'MA' %}
-            <div id="options-container" class="mt-4 list-group">
-                {% for item in options_with_labels %}
-                <div class="option list-group-item list-group-item-action" data-value="{{ item.text }}">
-                    <b class="me-2">{{ item.label }}.</b>
-                    <span>{{ item.text }}</span>
+            <div class="card-body">
+                <input type="hidden" name="question_id" value="{{ question.id }}">
+                {% for choice in question.answers.all %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="answer_ids[]" value="{{ choice.id }}" id="choice-{{ choice.id }}">
+                    <label class="form-check-label" for="choice-{{ choice.id }}">
+                        {{ choice.text }}
+                    </label>
                 </div>
                 {% endfor %}
             </div>
-            {% endif %}
-
-            {% if question.type == 'SA' %}
-            <div id="sa-container" class="mt-4">
-                <textarea id="sa-answer-input" class="form-control" rows="3" placeholder="답안을 입력하세요..."></textarea>
-            </div>
-            {% endif %}
-
-            <div id="correct-answer" data-answer="{{ question.correct_answer }}" style="display: none;"></div>
-
-            <p id="correct-answer-display" class="mt-4 fw-bold" style="display: none;"></p>
-
-            <div id="explanation-box" class="alert alert-info mt-4" style="display: none;">
-                <h5>해설</h5>
-                <div>{{ question.explanation|safe }}</div>
-            </div>
-
-            <div class="mt-4">
-                <button id="submit-btn" type="button" class="btn btn-primary">제출하기</button>
-                <a id="next-btn" href="? " class="btn btn-success" style="display: none;">
-                    다음 문제
-                </a>
-            </div>
-
-            <form style="display: none;">
-                {% csrf_token %}
-            </form>
         </div>
-    </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">제출하기</button>
+    </form>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#quiz-form').on('submit', function(e) {
+        // 1. form의 기본 제출 동작(페이지 새로고침)을 막습니다.
+        e.preventDefault();
+
+        // 2. 선택된 답안이 있는지 확인합니다.
+        var selectedChoices = $('input[name="answer_ids[]"]:checked');
+        if (selectedChoices.length === 0) {
+            alert('하나 이상의 답안을 선택해주세요.');
+            return; // 답이 없으면 여기서 함수를 완전히 종료합니다.
+        }
+
+        // 3. AJAX를 사용해 서버에 안전하게 데이터를 전송합니다.
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'mistake_note:record_answer' %}", // Django URL 템플릿 태그 사용
+            data: $(this).serialize(), // form 데이터를 직렬화하여 전송
+            success: function(response) {
+                // 4. 서버에서 성공 응답을 받으면, 결과 페이지로 이동합니다.
+                console.log('답안이 성공적으로 기록되었습니다.');
+                window.location.href = "{% url 'mistake_note:quiz_result' quiz.id %}";
+            },
+            error: function(xhr, status, error) {
+                console.error("답안 기록 중 오류 발생:", xhr.responseText);
+                alert('답안을 제출하는 중 오류가 발생했습니다.');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
