@@ -25,6 +25,6 @@ urlpatterns = [
     path("api/quiz/count/", views.get_question_count, name="get_question_count"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("api/validate-question/", views.validate_question_api, name="validate_question_api"),
-    path('record_answer/', views.record_answer, name='record_answer'),
+    path('record_answer/', views.record_quiz_answer, name='record_answer'),
     path('<int:quiz_id>/result/', views.quiz_result, name='quiz_result'),
 ]

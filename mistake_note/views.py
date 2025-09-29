@@ -222,10 +222,43 @@ def question_detail(request, pk):
 
 
 # 문제 결과
-def question_result(request, pk):
-    question = get_object_or_404(Question, pk=pk)
-    latest_answer = UserAnswer.objects.filter(question=question).order_by('-submitted_at').first()
-    return render(request, 'mistake_note/question_result.html', {'question': question, 'latest_answer': latest_answer})
+@login_required
+def quiz_result(request, quiz_id):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    attempt = get_object_or_404(QuizAttempt, user=request.user, quiz=quiz)
+    questions = quiz.questions.all()
+
+    results = []
+    correct_answers_count = 0
+    total_questions_count = questions.count()
+
+    for question in questions:
+        user_answers = attempt.answered.filter(question=question)
+        correct_answers = question.answers.filter(is_correct=True)
+
+        is_question_correct = set(user_answers) == set(correct_answers)
+
+        if is_question_correct:
+            correct_answers_count += 1
+
+        results.append({
+            'question': question,
+            'user_answers': user_answers,
+            'correct_answers': correct_answers,
+            'is_correct': is_question_correct,
+        })
+
+    score = (correct_answers_count / total_questions_count) * 100 if total_questions_count > 0 else 0
+
+    context = {
+        'quiz': quiz,
+        'results': results,
+        'score': score,
+        'correct_answers_count': correct_answers_count,
+        'total_questions_count': total_questions_count,
+    }
+
+    return render(request, 'mistake_note/quiz_result.html', context)
 
 
 # 퀴즈 선택
